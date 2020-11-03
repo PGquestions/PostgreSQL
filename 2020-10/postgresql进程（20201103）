@@ -1,0 +1,9 @@
+postmaster：
+数据库实例的总控进程，负责启动和关闭该数据库实例。用户可以运行postmaster、postgres命令加上合适的参数启动数据库。实际上postmaster命令是一个指向postgres的链接。
+当用户与postgresql数据库建立连接时，实际上是先与postmaster进程建立连接，此时，客户端程序会发出身份验证的消息给postmaster主进程，postmaster主进程根据消息中的信息进行客户端身份验证，
+如果验证通过，它会fork出一个子进程来为这个连接服务。fork出的子进程为服务进程。查询pg_stat_activity表时看到的pid就是这些服务进程的PID。
+
+Syslogger（系统日志）进程：
+只有在参数logging_collect设置为“on”时，主进程才会启动syslogger辅助进程。syslogger辅助进程通过从postmaster进程、所有的服务进程及其他辅助进程收集所有的stderr输出，并将这些输出写入到日志文件中。
+在postgresql.conf配置文件中设置了日志文件大小和存在时间，当一个日志文件达到配置中的大小或其他条件时，syslogger就会关闭旧的日志文件，并创建一个新的日志文件，如果收到装载配置文件的信息（SIGHUP），
+就会检查配置文件中的配置参数“log_directory”和“log_filename”是否与当前的相同，如果不相同，则会切换日志文件并使用新的配置。
