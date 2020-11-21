@@ -1,0 +1,26 @@
+vi /etc/sysctl.conf
+kernel.shmmax = 68719476736(默认)	#最大共享内存段大小
+kernel.shmall = 4294967296(默认)	#可以使用的共享内存的总量
+kernel.msgmax = 524288				#一个消息的最大长度
+kernel.msgmnb = 5242880				#一个消息队列上的最大字节数
+kernel.msgmni = 2048				#最大消息队列的个数
+kernel.sem = 50100 64128000 50100 1280#每个信号对象集的最大信号数;系统范围内
+										>最大信号对象数;每个信号对象支持的最大操作数;
+										>系统范围内最大信息对象集数
+fs.file-max = 7672460				#文件句柄的最大数量。表示在Linux系统中可以打开的文件数量
+net.ipv4.ip_local_port_range = 9000 65000#应用程序可使用的IPV4端口范围
+net.core.rmem_default = 1048576		#套接字接收缓冲区大小的缺省值
+net.core.wmen_default =262144		#套接字发送缓冲区大小的缺省值
+net.core.wmem_max = 1048576			#套接字发送缓冲区大小的最大值
+sysctl -p 
+
+--linux资源限制调整(20201020)
+vi /etc/security/limits.conf
+* soft nofile 131072			#当前系统生效的打开文件的数目
+* hard nofile 131072			#系统中所能设定的打开文件的最大值
+* soft nproc 131072				#当前系统生效的进程的数目
+* hard nproc 131072				#系统中所能设置的进程数目的最大值
+* soft core unlimited 			#当前系统生效的内核文件的大小
+* hard core unlimited			#系统中所能设定的内核文件的最大值
+* soft memlock 50000000			#当前系统生效的锁定内存地址空间的大小
+* hard memlock 50000000			#系统中所能设定的锁定内存地址空间的最大值
