@@ -1,0 +1,215 @@
+https://www.pgpool.net/mediawiki/index.php/Downloads
+下载pgpool
+[root@rhel6lhr tmp]# pwd
+/tmp
+[root@rhel6lhr tmp]# tar -zxvf pgpool-II-4.1.3.tar.gz
+[root@rhel6lhr tmp]# mv pgpool-II-4.1.3 /opt/
+[root@rhel6lhr tmp]# cd /opt/pgpool-II-4.1.3/
+[root@rhel6lhr pgpool-II-4.1.3]# ./configure 
+[root@rhel6lhr pgpool-II-4.1.3]# gmake && gmake install 
+[root@rhel6lhr pgpool-II-4.1.3]# cd /usr/local/etc/
+[root@rhel6lhr etc]# ls
+failover.sh.sample               pgpool.conf.sample-replication
+follow_master.sh.sample          pgpool.conf.sample-stream
+pcp.conf.sample                  pgpool_remote_start.sample
+pgpool.conf.sample               pool_hba.conf.sample
+pgpool.conf.sample-logical       recovery_1st_stage.sample
+pgpool.conf.sample-master-slave  recovery_2nd_stage.sample
+[root@rhel6lhr etc]# cp pool_hba.conf.sample pool_hba.conf
+[root@rhel6lhr etc]# cp pgpool.conf.sample-stream pgpool.conf
+[root@rhel6lhr etc]# cp pcp.conf.sample pcp.conf
+[root@rhel6wcb1 etc]# pwd
+/usr/local/etc
+[root@rhel6wcb1 etc]# ls
+failover.sh.sample               pgpool.conf.sample-replication
+follow_master.sh.sample          pgpool.conf.sample-stream
+pcp.conf                         pgpool_remote_start.sample
+pcp.conf.sample                  pool_hba.conf
+pgpool.conf                      pool_hba.conf.sample
+pgpool.conf.sample               recovery_1st_stage.sample
+pgpool.conf.sample-logical       recovery_2nd_stage.sample
+pgpool.conf.sample-master-slave
+[root@rhel6wcb1 etc]# cat pgpool.conf
+listen_addresses = '0.0.0.0'    
+port = 9999    
+socket_dir = '/tmp'    
+pcp_port = 9898    
+pcp_socket_dir = '/tmp'    
+backend_hostname0 = '192.168.59.172'    
+backend_port0 = 5432     
+backend_weight0 = 1    
+backend_flag0 = 'ALLOW_TO_FAILOVER'    
+backend_hostname1 = '192.168.59.171'    
+backend_port1 = 5432    
+backend_weight1 = 1    
+backend_flag1 = 'ALLOW_TO_FAILOVER'    
+enable_pool_hba = on    
+pool_passwd = 'pool_passwd'    
+authentication_timeout = 60    
+ssl = off    
+num_init_children = 32    
+max_pool = 4    
+child_life_time = 300    
+child_max_connections = 0    
+connection_life_time = 0    
+client_idle_limit = 0    
+log_destination = 'syslog'    
+print_timestamp = on    
+log_connections = on    
+log_hostname = off    
+ 
+log_statement = on    
+log_per_node_statement = on    
+  
+log_standby_delay = 'always'    
+syslog_facility = 'LOCAL0'    
+syslog_ident = 'pgpool'    
+debug_level = 0    
+pid_file_name = '/var/run/pgpool/pgpool.pid'    
+logdir = '/tmp'    
+connection_cache = on    
+reset_query_list = 'ABORT; DISCARD ALL'    
+replication_mode = off    
+replicate_select = off    
+insert_lock = off    
+lobj_lock_table = ''    
+replication_stop_on_mismatch = off    
+failover_if_affected_tuples_mismatch = off    
+load_balance_mode = on    
+ignore_leading_white_space = on    
+white_function_list = ''    
+black_function_list = 'currval,lastval,nextval,setval'    
+master_slave_mode = on    
+master_slave_sub_mode = 'stream'    
+sr_check_period = 2    
+sr_check_user = 'srcheck'    
+sr_check_password = 'SRCHECK'    
+delay_threshold = 1024000    
+follow_master_command = ''    
+parallel_mode = off    
+pgpool2_hostname = ''    
+health_check_period = 0    
+health_check_timeout = 20    
+health_check_user = 'nobody'    
+health_check_password = ''    
+health_check_max_retries = 0    
+health_check_retry_delay = 1    
+failover_command = ''    
+failback_command = ''    
+fail_over_on_backend_error = on    
+search_primary_node_timeout = 10    
+recovery_user = 'nobody'    
+recovery_password = ''    
+recovery_1st_stage_command = ''    
+recovery_2nd_stage_command = ''    
+recovery_timeout = 90    
+client_idle_limit_in_recovery = 0    
+use_watchdog = off    
+trusted_servers = ''    
+ping_path = '/bin'    
+wd_hostname = ''    
+wd_port = 9000    
+wd_authkey = ''    
+delegate_IP = ''    
+ifconfig_path = '/sbin'    
+if_up_cmd = 'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'    
+if_down_cmd = 'ifconfig eth0:0 down'    
+arping_path = '/usr/sbin'           # arping command path    
+arping_cmd = 'arping -U $_IP_$ -w 1'    
+clear_memqcache_on_escalation = on    
+wd_escalation_command = ''    
+wd_lifecheck_method = 'heartbeat'    
+wd_interval = 10    
+wd_heartbeat_port = 9694    
+wd_heartbeat_keepalive = 2    
+wd_heartbeat_deadtime = 30    
+heartbeat_destination0 = 'host0_ip1'    
+heartbeat_destination_port0 = 9694     
+heartbeat_device0 = ''    
+wd_life_point = 3    
+wd_lifecheck_query = 'SELECT 1'    
+wd_lifecheck_dbname = 'template1'    
+wd_lifecheck_user = 'nobody'    
+wd_lifecheck_password = ''    
+relcache_expire = 0    
+relcache_size = 256    
+check_temp_table = on    
+memory_cache_enabled = off    
+memqcache_method = 'shmem'    
+memqcache_memcached_host = 'localhost'    
+memqcache_memcached_port = 11211    
+memqcache_total_size = 67108864    
+memqcache_max_num_cache = 1000000    
+memqcache_expire = 0    
+memqcache_auto_cache_invalidation = on    
+memqcache_maxcache = 409600    
+memqcache_cache_block_size = 1048576    
+memqcache_oiddir = '/var/log/pgpool/oiddir'    
+white_memqcache_table_list = ''    
+black_memqcache_table_list = '' 
+  
+[root@rhel6wcb1 bin]# pg_md5 -u sup_pool sup_pool_pwd  
+c21777db255631573e4233403773bb3b
+
+[root@rhel6wcb1 etc]# pwd
+/usr/local/etc
+[root@rhel6wcb1 etc]# more pcp.conf
+sup_pool:c21777db255631573e4233403773bb3b
+
+[root@rhel6wcb1 etc]# more pool_hba.conf
+
+local   all         all                               trust    
+host    all         all         127.0.0.1/32          trust    
+host all all 0.0.0.0/0 md5   
+
+
+postgres=# alter user postgres password '123456';
+ALTER ROLE
+postgres=# select rolname,rolpassword from pg_authid;
+          rolname          |             rolpassword             
+---------------------------+-------------------------------------
+ pg_monitor                | 
+ pg_read_all_settings      | 
+ pg_read_all_stats         | 
+ pg_stat_scan_tables       | 
+ pg_read_server_files      | 
+ pg_write_server_files     | 
+ pg_execute_server_program | 
+ pg_signal_backend         | 
+ repuser                   | md5d0d4848cc5d9180ed934a89f3b0c6225
+ test                      | md55a2e54ee57e5b7273b9a8fed78c1ebd8
+ postgres                  | md5a3556571e93b0d20722ba62be61e8c2d
+
+[root@rhel6wcb1 etc]# pwd
+/usr/local/etc
+[root@rhel6wcb1 etc]# more pool_passwd 
+postgres:md5a3556571e93b0d20722ba62be61e8c2d 
+
+[postgres@rhel6wcb1 ~]$ psql
+psql (11.7)
+Type "help" for help.
+
+postgres=# create role srcheck nosuperuser login encrypted password 'SRCHECK';
+CREATE ROLE
+
+
+[root@rhel6wcb1 bin]# pgpool -f /usr/local/etc/pgpool.conf
+[root@rhel6wcb1 bin]# pwd
+/usr/local/bin
+[root@rhel6wcb1 bin]# tail -20f /var/log/messages
+--在备库连接pgpool可以直接创建表
+[postgres@rhel6wcb1 ~]$ psql -h 127.0.0.1 -p 9999 -U postgres postgres
+psql (11.7)
+Type "help" for help.
+
+postgres=# create table t_test2(id numeric);
+CREATE TABLE
+
+[postgres@rhel6wcb1 ~]$ psql -h 127.0.0.1 -p 	9999 -U postgres postgres
+psql (11.7)
+Type "help" for help.
+
+postgres=# select * from t_test2;
+ id 
+----
+(0 rows)
