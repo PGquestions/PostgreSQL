@@ -1,0 +1,35 @@
+[postgres@rhel6lhr data]$ cat recovery.conf |grep recovery_min
+recovery_min_apply_delay = 2min
+[postgres@rhel6lhr data]$ pg_ctl restart
+waiting for server to shut down........ done
+server stopped
+waiting for server to start....2020-10-26 23:37:15.975 CST [27436] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2020-10-26 23:37:15.975 CST [27436] LOG:  listening on IPv6 address "::", port 5432
+2020-10-26 23:37:15.977 CST [27436] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2020-10-26 23:37:15.988 CST [27436] LOG:  redirecting log output to logging collector process
+2020-10-26 23:37:15.988 CST [27436] HINT:  Future log output will appear in directory "log".
+ done
+server started
+--主库切换wal日志
+postgres=# select pg_switch_wal();
+-[ RECORD 1 ]-+-----------
+pg_switch_wal | 1/CF000158
+postgres=# SELECT pid,usename,client_addr,state,write_lag,flush_lag,replay_lag FROM pg_stat_replication; 
+-[ RECORD 1 ]----------------
+pid         | 2176
+usename     | repuser
+client_addr | 192.168.59.172
+state       | streaming
+write_lag   | 00:00:00.000402
+flush_lag   | 00:00:00.000697
+replay_lag  | 00:02:02.77061
+--可以看到这里的replay_log是
+postgres=# select now(),* from test_delay;
+ERROR:  relation "test_delay" does not exist
+LINE 1: select now(),* from test_delay;
+                            ^
+postgres=# select now(),* from test_delay;
+              now              | id |     create_time     
+-------------------------------+----+---------------------
+ 2020-10-26 23:57:51.150388+08 |  1 | 2020-10-26 23:55:36
+ 这里也可以看到要2分钟后才能查询到
