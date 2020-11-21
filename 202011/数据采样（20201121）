@@ -1,0 +1,9 @@
+1）块采样
+create table test(id int primary key, username text, phonenum text, addr text, pwd text, crt_time timestamp);  
+insert into test select id, 'test_'||id, 13900000000+(random()*90000000)::int, '中国杭州xxxxxxxxxxxxxxxxxx'||random(), md5(random()::text), clock_timestamp() from generate_series(1,10000000) t(id);
+postgres=# select * from test TABLESAMPLE system (1) limit 20;
+
+2）数据采样
+create table test(id int primary key, username text, phonenum text, addr text, pwd text, crt_time timestamp);  
+insert into test select id, 'test_'||id, 13900000000+(random()*90000000)::int, '中国杭州xxxxxxxxxxxxxxxxxx'||random(), md5(random()::text), clock_timestamp() from generate_series(1,10000000) t(id);
+postgres=# select * from test TABLESAMPLE bernoulli (1) limit 20; 
