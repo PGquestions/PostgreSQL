@@ -1,0 +1,279 @@
+安装常用包
+# yum -y install coreutils glib2 lrzsz mpstat dstat sysstat e4fsprogs xfsprogs ntp readline-devel zlib-devel openssl-devel pam-devel libxml2-devel libxslt-devel python-devel tcl-devel gcc make smartmontools flex bison perl-devel perl-ExtUtils* openldap-devel jadetex  openjade bzip2
+
+配置OS内核参数
+# vi /etc/sysctl.conf
+
+# add by digoal.zhou
+fs.aio-max-nr = 1048576
+fs.file-max = 76724600
+kernel.core_pattern= /data01/corefiles/core_%e_%u_%t_%s.%p         
+# /data01/corefiles事先建好，权限777，如果是软链接，对应的目录修改为777
+kernel.sem = 4096 2147483647 2147483646 512000    
+# 信号量, ipcs -l 或 -u 查看，每16个进程一组，每组信号量需要17个信号量。
+kernel.shmall = 107374182      
+# 所有共享内存段相加大小限制(建议内存的80%)
+kernel.shmmax = 274877906944   
+# 最大单个共享内存段大小(建议为内存一半), >9.2的版本已大幅降低共享内存的使用
+kernel.shmmni = 819200         
+# 一共能生成多少共享内存段，每个PG数据库集群至少2个共享内存段
+net.core.netdev_max_backlog = 10000
+net.core.rmem_default = 262144       
+# The default setting of the socket receive buffer in bytes.
+net.core.rmem_max = 4194304          
+# The maximum receive socket buffer size in bytes
+net.core.wmem_default = 262144       
+# The default setting (in bytes) of the socket send buffer.
+net.core.wmem_max = 4194304          
+# The maximum send socket buffer size in bytes.
+net.core.somaxconn = 4096
+net.ipv4.tcp_max_syn_backlog = 4096
+net.ipv4.tcp_keepalive_intvl = 20
+net.ipv4.tcp_keepalive_probes = 3
+net.ipv4.tcp_keepalive_time = 60
+net.ipv4.tcp_mem = 8388608 12582912 16777216
+net.ipv4.tcp_fin_timeout = 5
+net.ipv4.tcp_synack_retries = 2
+net.ipv4.tcp_syncookies = 1    
+# 开启SYN Cookies。当出现SYN等待队列溢出时，启用cookie来处理，可防范少量的SYN攻击
+net.ipv4.tcp_timestamps = 1    
+# 减少time_wait
+net.ipv4.tcp_tw_recycle = 0    
+# 如果=1则开启TCP连接中TIME-WAIT套接字的快速回收，但是NAT环境可能导致连接失败，建议服务端关闭它
+net.ipv4.tcp_tw_reuse = 1      
+# 开启重用。允许将TIME-WAIT套接字重新用于新的TCP连接
+net.ipv4.tcp_max_tw_buckets = 262144
+net.ipv4.tcp_rmem = 8192 87380 16777216
+net.ipv4.tcp_wmem = 8192 65536 16777216
+net.nf_conntrack_max = 1200000
+net.netfilter.nf_conntrack_max = 1200000
+vm.dirty_background_bytes = 409600000       
+#  系统脏页到达这个值，系统后台刷脏页调度进程 pdflush（或其他） 自动将(dirty_expire_centisecs/100）秒前的脏页刷到磁盘
+vm.dirty_expire_centisecs = 3000             
+#  比这个值老的脏页，将被刷到磁盘。3000表示30秒。
+vm.dirty_ratio = 95                          
+#  如果系统进程刷脏页太慢，使得系统脏页超过内存 95 % 时，则用户进程如果有写磁盘的操作（如fsync, fdatasync等调用），则需要主动把系统脏页刷出。
+#  有效防止用户进程刷脏页，在单机多实例，并且使用CGROUP限制单实例IOPS的情况下非常有效。  
+vm.dirty_writeback_centisecs = 100            
+#  pdflush（或其他）后台刷脏页进程的唤醒间隔， 100表示1秒。
+vm.mmap_min_addr = 65536
+vm.overcommit_memory = 0     
+#  在分配内存时，允许少量over malloc, 如果设置为 1, 则认为总是有足够的内存，内存较少的测试环境可以使用 1 .  
+vm.overcommit_ratio = 90     
+#  当overcommit_memory = 2 时，用于参与计算允许指派的内存大小。
+vm.swappiness = 0            
+#  关闭交换分区
+vm.zone_reclaim_mode = 0     
+# 禁用 numa, 或者在vmlinux中禁止. 
+net.ipv4.ip_local_port_range = 40000 65535    
+# 本地自动分配的TCP, UDP端口号范围
+fs.nr_open=20480000
+# 单个进程允许打开的文件句柄上限
+net.ipv4.tcp_max_syn_backlog = 16384
+net.core.somaxconn = 16384
+
+生效配置
+[root@rhel6lhr data01]# sysctl -p
+
+配置OS资源限制
+# vi /etc/security/limits.conf
+
+# nofile超过1048576的话，一定要先将sysctl的fs.nr_open设置为更大的值，并生效后才能继续设置nofile.
+* soft    nofile  1024000
+* hard    nofile  1024000
+* soft    nproc   unlimited
+* hard    nproc   unlimited
+* soft    core    unlimited
+* hard    core    unlimited
+* soft    memlock unlimited
+* hard    memlock unlimited
+
+配置防火墙（根据业务场景设置，这里先关闭防火墙）
+iptables -F
+
+关闭selinux
+[root@rhel6lhr ~]# cat  /etc/sysconfig/selinux 
+
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=disabled
+# SELINUXTYPE= can take one of these two values:
+#     targeted - Targeted processes are protected,
+#     mls - Multi Level Security protection.
+SELINUXTYPE=targeted 
+
+上传源码安装包到/tmp
+解压安装包
+[root@rhel6lhr tmp]# tar -xjvf postgresql-11.7.tar.bz2
+[root@rhel6lhr tmp]# mkdir R /usr/local/pgsql
+[root@rhel6lhr tmp]# mv postgresql-11.7 /usr/local/pgsql
+[root@rhel6lhr postgresql-11.7]# pwd
+/usr/local/pgsql/postgresql-11.7
+[root@rhel6lhr postgresql-11.7]# ./configure 
+[root@rhel6lhr postgresql-11.7]# make
+[root@rhel6lhr postgresql-11.7]# make install
+[root@rhel6lhr ~]# adduser postgres
+[root@rhel6lhr ~]# passwd postgres
+Changing password for user postgres.
+New password: 
+BAD PASSWORD: it is based on a dictionary word
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+[root@rhel6lhr ~]# mkdir -p /usr/local/pgsql/data
+[root@rhel6lhr ~]# chown -R postgres:root /usr/local/pgsql
+[postgres@rhel6lhr ~]$ cat .bash_profile 
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
+
+PATH=$PATH:$HOME/bin
+
+export PATH
+export PATH=$PATH:/usr/local/pgsql/bin
+
+初始化数据库
+[postgres@rhel6lhr data]$ /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "en_US.UTF-8".
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /usr/local/pgsql/data ... ok
+creating subdirectories ... ok
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default timezone ... PRC
+selecting dynamic shared memory implementation ... posix
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+WARNING: enabling "trust" authentication for local connections
+You can change this by editing pg_hba.conf or using the option -A, or
+--auth-local and --auth-host, the next time you run initdb.
+
+Success. You can now start the database server using:
+
+    /usr/local/pgsql/bin/pg_ctl -D /usr/local/pgsql/data -l logfile start
+    
+   
+   启动数据库
+[postgres@rhel6lhr data]$ pg_ctl start -D /usr/local/pgsql/data
+waiting for server to start....2020-09-12 20:10:28.281 CST [32063] LOG:  listening on IPv6 address "::1", port 5432
+2020-09-12 20:10:28.281 CST [32063] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2020-09-12 20:10:28.283 CST [32063] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2020-09-12 20:10:28.295 CST [32064] LOG:  database system was shut down at 2020-09-12 20:09:25 CST
+2020-09-12 20:10:28.311 CST [32063] LOG:  database system is ready to accept connections
+ done
+server started
+
+配置pg_hba.conf
+[postgres@rhel6lhr data]$ cat pg_hba.conf
+# PostgreSQL Client Authentication Configuration File
+# ===================================================
+#
+# Refer to the "Client Authentication" section in the PostgreSQL
+# documentation for a complete description of this file.  A short
+# synopsis follows.
+#
+# This file controls: which hosts are allowed to connect, how clients
+# are authenticated, which PostgreSQL user names they can use, which
+# databases they can access.  Records take one of these forms:
+#
+# local      DATABASE  USER  METHOD  [OPTIONS]
+# host       DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostssl    DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostnossl  DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+#
+# (The uppercase items must be replaced by actual values.)
+#
+# The first field is the connection type: "local" is a Unix-domain
+# socket, "host" is either a plain or SSL-encrypted TCP/IP socket,
+# "hostssl" is an SSL-encrypted TCP/IP socket, and "hostnossl" is a
+# plain TCP/IP socket.
+#
+# DATABASE can be "all", "sameuser", "samerole", "replication", a
+# database name, or a comma-separated list thereof. The "all"
+# keyword does not match "replication". Access to replication
+# must be enabled in a separate record (see example below).
+#
+# USER can be "all", a user name, a group name prefixed with "+", or a
+# comma-separated list thereof.  In both the DATABASE and USER fields
+# you can also write a file name prefixed with "@" to include names
+# from a separate file.
+#
+# ADDRESS specifies the set of hosts the record matches.  It can be a
+# host name, or it is made up of an IP address and a CIDR mask that is
+# an integer (between 0 and 32 (IPv4) or 128 (IPv6) inclusive) that
+# specifies the number of significant bits in the mask.  A host name
+# that starts with a dot (.) matches a suffix of the actual host name.
+# Alternatively, you can write an IP address and netmask in separate
+# columns to specify the set of hosts.  Instead of a CIDR-address, you
+# can write "samehost" to match any of the server's own IP addresses,
+# or "samenet" to match any address in any subnet that the server is
+# directly connected to.
+#
+# METHOD can be "trust", "reject", "md5", "password", "scram-sha-256",
+# "gss", "sspi", "ident", "peer", "pam", "ldap", "radius" or "cert".
+# Note that "password" sends passwords in clear text; "md5" or
+# "scram-sha-256" are preferred since they send encrypted passwords.
+#
+# OPTIONS are a set of options for the authentication in the format
+# NAME=VALUE.  The available options depend on the different
+# authentication methods -- refer to the "Client Authentication"
+# section in the documentation for a list of which options are
+# available for which authentication methods.
+#
+# Database and user names containing spaces, commas, quotes and other
+# special characters must be quoted.  Quoting one of the keywords
+# "all", "sameuser", "samerole" or "replication" makes the name lose
+# its special character, and just match a database or username with
+# that name.
+#
+# This file is read on server startup and when the server receives a
+# SIGHUP signal.  If you edit the file on a running system, you have to
+# SIGHUP the server for the changes to take effect, run "pg_ctl reload",
+# or execute "SELECT pg_reload_conf()".
+#
+# Put your actual configuration here
+# ----------------------------------
+#
+# If you want to allow non-local connections, you need to add more
+# "host" records.  In that case you will also need to make PostgreSQL
+# listen on a non-local interface via the listen_addresses
+# configuration parameter, or via the -i or -h command line switches.
+
+# CAUTION: Configuring the system for local "trust" authentication
+# allows any local user to connect as any PostgreSQL user, including
+# the database superuser.  If you do not trust all your local users,
+# use another authentication method.
+
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# "local" is for Unix domain socket connections only
+local   all             all                                     trust
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            trust
+# IPv6 local connections:
+host    all             all             ::1/128                 trust
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+local   replication     all                                     trust
+host    replication     all             127.0.0.1/32            trust
+host    replication     all             ::1/128                 trust
+host    all     all     0.0.0.0/0 md5
+
