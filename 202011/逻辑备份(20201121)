@@ -1,0 +1,30 @@
+1、库表级逻辑备份
+[postgres@rhel6wcb2 ~]$ pg_dump -h 127.0.0.1 -p 5432 -d postgres -Fc -f pg_dump.dmp
+postgres=# truncate table pg_dump;
+TRUNCATE TABLE
+[postgres@rhel6wcb2 ~]$ pg_restore -h 127.0.0.1 -p 5432 -d postgres pg_dump.dmp
+postgres=# select count(*) from pg_dump;
+ count  
+--------
+ 100000
+(1 row)
+
+--只导出pg_dump表
+[postgres@rhel6wcb2 ~]$ pg_dump -h 127.0.0.1 -p 5432 -d postgres -Fc -t pg_dump -f pg_dump.dmp
+[postgres@rhel6wcb2 ~]$ psql
+psql (11.7)
+Type "help" for help.
+
+postgres=# drop table pg_dump;
+DROP TABLE
+postgres=# \q
+[postgres@rhel6wcb2 ~]$ pg_restore -h 127.0.0.1 -p 5432 -d postgres pg_dump.dmp
+[postgres@rhel6wcb2 ~]$ psql
+psql (11.7)
+Type "help" for help.
+
+postgres=# select count(*) from pg_dump;
+ count  
+--------
+ 100000
+(1 row)
