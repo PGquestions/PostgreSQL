@@ -1,0 +1,83 @@
+在主库和备库分别安装好PG软件并且初始化数据库。
+主库配置postgres.conf
+wal_level=replica 
+archive_mode=on 
+archive_command = 'DATE=`date +%Y%m%d`;DIR="/tmp/$DATE";(test -d $DIR || mkdir -p $DIR)&& cp %p $DIR/%f'max_wal_senders=10 
+wal_keep_segments=512 
+hot_standby=on 
+主库配置pg_hba.conf
+host   replication repuser 192.168.59.172/32 md5
+host   replication repuser 192.168.59.171/32 md5
+主库启动数据库
+[postgres@rhel6lhr data]$ pg_ctl start
+主库创建流复制用户repuser
+create user repuser replication login connection limit 5 encrypted password '123456';
+主库开启在线备份
+postgres=# select pg_start_backup('francs_bk4');
+ pg_start_backup 
+-----------------
+ 0/4000028
+(1 row)
+[postgres@rhel6lhr pgsql]$ tar czvf pg_date.tar.gz data
+[postgres@rhel6lhr pgsql]$ scp pg_date.tar.gz  postgres@192.168.59.171:/usr/local/pgsql/
+
+备库解压数据文件
+[postgres@rhel6lhr pgsql]$ tar xvf pg_date.tar.gz 
+
+	主库停止备份
+[postgres@rhel6lhr pgsql]$ psql
+psql (11.7)
+Type "help" for help.
+
+postgres=# select pg_stop_backup();
+NOTICE:  pg_stop_backup complete, all required WAL segments have been archived
+ pg_stop_backup 
+----------------
+ 0/13000130
+(1 row)
+
+备库进行相应配置
+[postgres@rhel6lhr share]$ cp recovery.conf.sample /usr/local/pgsql/data/
+[postgres@rhel6lhr share]$ cd /usr/local/pgsql/data/
+[postgres@rhel6lhr data]$ mv recovery.conf.sample recovery.conf
+备库在recovery.conf添加如下配置
+recovery_target_timeline = 'latest'
+standby_mode = on
+primary_conninfo = 'host=192.168.59.172 port=5432 user=repuser password=123456'
+[postgres@rhel6lhr data]$ touch .pgpass
+[postgres@rhel6lhr data]$ chmod 0600 .pgpass 
+[postgres@rhel6lhr data]$ cat .pgpass 
+192.168.59.172:5432:replication:repuser:123456
+192.168.59.171:5432:replication:repuser:123456
+启动备库的数据库
+[postgres@rhel6lhr data]$ pg_ctl start
+主库查询进程：
+[postgres@rhel6lhr data]$ ps -ef |grep postgres
+root     20388 15926  0 19:31 pts/1    00:00:00 su - postgres
+postgres 20389 20388  0 19:31 pts/1    00:00:00 -bash
+postgres 21617     1  0 20:35 pts/1    00:00:00 /usr/local/pgsql/bin/postgres
+postgres 21618 21617  0 20:35 ?        00:00:00 postgres: logger             
+postgres 21620 21617  0 20:35 ?        00:00:00 postgres: checkpointer       
+postgres 21621 21617  0 20:35 ?        00:00:00 postgres: background writer   
+postgres 21622 21617  0 20:35 ?        00:00:00 postgres: walwriter          
+postgres 21623 21617  0 20:35 ?        00:00:00 postgres: autovacuum launcher   
+postgres 21624 21617  0 20:35 ?        00:00:00 postgres: archiver           
+postgres 21625 21617  0 20:35 ?        00:00:00 postgres: stats collector    
+postgres 21626 21617  0 20:35 ?        00:00:00 postgres: logical replication launcher   
+postgres 21891 21617  0 20:48 ?        00:00:00 postgres: walsender repuser 192.168.59.171(54613) streaming 0/16016EE0
+postgres 22054 20389  0 21:02 pts/1    00:00:00 ps -ef
+postgres 22055 20389  0 21:02 pts/1    00:00:00 grep postgres
+在备库查看进程：
+[postgres@rhel6lhr data]$ ps -ef |grep postgres
+root     30843 15980  0 20:19 pts/1    00:00:00 su - postgres
+postgres 30844 30843  0 20:19 pts/1    00:00:00 -bash
+postgres 31567     1  0 20:48 pts/1    00:00:00 /usr/local/pgsql/bin/postgres
+postgres 31568 31567  0 20:48 ?        00:00:00 postgres: logger             
+postgres 31569 31567  0 20:48 ?        00:00:00 postgres: startup   recovering 000000010000000000000016
+postgres 31570 31567  0 20:48 ?        00:00:00 postgres: checkpointer       
+postgres 31571 31567  0 20:48 ?        00:00:00 postgres: background writer   
+postgres 31572 31567  0 20:48 ?        00:00:01 postgres: walreceiver   streaming 0/16016EE0
+postgres 31573 31567  0 20:48 ?        00:00:00 postgres: stats collector    
+postgres 31717 30844  1 21:01 pts/1    00:00:00 ps -ef
+postgres 31718 30844  0 21:01 pts/1    00:00:00 grep postgres
+主库和备库有相应进程即流复制搭建成功。
