@@ -1,3 +1,7 @@
+延迟备库
+时间：2020年11月23日
+
+
 [postgres@rhel6lhr data]$ cat recovery.conf |grep recovery_min
 recovery_min_apply_delay = 2min
 [postgres@rhel6lhr data]$ pg_ctl restart
