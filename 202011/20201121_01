@@ -1,3 +1,5 @@
+逻辑备份
+
 1、库表级逻辑备份
 [postgres@rhel6wcb2 ~]$ pg_dump -h 127.0.0.1 -p 5432 -d postgres -Fc -f pg_dump.dmp
 postgres=# truncate table pg_dump;
