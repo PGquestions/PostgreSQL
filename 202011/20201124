@@ -1,0 +1,41 @@
+如何排查PG WAL文件数量长期持续增加
+PG版本：PostgreSQL 11
+背景：最近一段时间的pg_wal目录和归档目录所占磁盘较大，并且WAL增长的速度较快，由于磁盘空间不大，应该如何处理？
+问题：
+1）WAL会一直增加直至把磁盘撑爆吗？DBMS有参数控制上限吗？
+2）WAL文件为什么会保留那么多，DBMS难道不会自动清理，需要人工介入吗？
+3）WAL增长速度快的原因？
+
+分析：
+因为PostgreSQL不同版本之间参数有差异，所以确认运行环境是排查问题的第一步。当前环境的版本为PostgreSQL 11，
+那么针对pg_wal目录下文件数量和尺寸的问题，我们首先明确如下几个相关参数的含义：
+	wal_segment_size：单个WAL文件的大小，默认为16MB。一般不做更改。
+	wal_keep_segments：这个参数配置的是standby复制所需的在pg_wal目录中最少保留的WAL文件的数目。一般情况下，这大概就是WAL尺寸范围，如果这个参数配置为0，那么此时wal文件的数量还取决于如下其他参数。
+	min_wal_size：这个是wal文件保留的最小尺寸，当wal的使用低于这个配置，那么wal将会在checkpoint时候对wal以recycle的形式处理，而不是直接remove。当然这个参数也是有配置范围限制的：min_wal_size至少是wal_segment_size的2倍。
+	archive_timeout：如果DB实例写入量很少，到达archive_timeout会触发WAL文件的强制切换。因此如果archive_timeout太短就会产生很多新的WAL，从而产生大量归档。
+除了这些参数配置外，还有一些异常情况会造成WAL堆积：
+	如果开启了归档，那么归档命令成功了，WAL才会被remove/recycle。所以这里需要注意，如果归档命令是失效的，那么pg_wal目录会一直增长，不会自动删除WAL。此目录会持续增长，进而有撑爆磁盘的风险。
+	在创建复制槽后，如果通过复制槽不能正常消费掉，则会造成WAL堆积，导致主库的WAL文件数量一直增加，pg_wal目录也会一直增加。
+
+
+解决：
+首先检查DB实例的上述参数。
+select version();
+show wal_keep_segments;
+show min_wal_size;
+show max_wal_size;
+show archive_timeout;
+select * from pg_stat_get_archiver();
+
+WAL增长速度快？
+如果archive_timeout较小，wal就会产生过快，可以将archive_timeout调大。
+WAL文件为什么保留这么多？
+1）wal_keep_segments参数
+2）是否是归档失败导致
+pg_stat_get_archiver的filed_count是0，且同时检查DB log没有任何异常信息，可以排除归档失败导致的。
+3）pg_replication_slots
+查询复制槽的集火状态"active = f ",可以确定其不是被某些进程正在使用的此复制槽
+接下来查看restart_lsn对应的WAL文件名
+SELECT pg_walfile_name('');
+确认当前wal_lsn和上面开始堆积的lsn差异是不是和现在pg_wal尺寸吻合
+SELECT pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(),'restart_lsn'));
