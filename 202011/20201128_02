@@ -1,0 +1,5 @@
+主备切换
+2020年11月28日11:45:41
+1）关闭主库，建议使用-m fast模式关闭
+2）在备库上执行pg_ctl promote命令激活备库，如果recovery.conf变成recovery.done表示备库已经切换成主库
+3）需要在老的主库的$PGDATA目录下创建recovery.conf文件，配置和老的从库一样，只是primary_conninfo参数中的IP换成对端IP启动老的从库，观察主备进程是否正常，如果正常则主备切换成功。
