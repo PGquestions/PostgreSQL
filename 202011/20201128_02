@@ -3,3 +3,52 @@
 1）关闭主库，建议使用-m fast模式关闭
 2）在备库上执行pg_ctl promote命令激活备库，如果recovery.conf变成recovery.done表示备库已经切换成主库
 3）需要在老的主库的$PGDATA目录下创建recovery.conf文件，配置和老的从库一样，只是primary_conninfo参数中的IP换成对端IP启动老的从库，观察主备进程是否正常，如果正常则主备切换成功。
+示例：
+--停主库
+[postgres@rhel6lhr ~]$ pg_ctl stop
+waiting for server to shut down..... done
+server stopped
+--备库升主库
+[postgres@rhel6lhr ~]$ pg_ctl promote
+waiting for server to promote.... done
+server promoted
+[postgres@rhel6lhr data]$ pwd 
+/usr/local/pgsql/data
+[postgres@rhel6lhr data]$ ls -l recovery.done 
+-rw-r--r--. 1 postgres postgres 5896 Oct  7 20:47 recovery.done
+--原主库
+[postgres@rhel6lhr share]$ pwd
+/usr/local/pgsql/share
+[postgres@rhel6lhr share]$ cp  recovery.conf.sample  /usr/local/pgsql/data/recovery.conf
+
+在recover.conf添加一下参数：
+recovery_target_timeline = 'latest'
+standby_mode = on
+primary_conninfo = 'host=192.168.59.171 port=5432 user=repuser password=123456'
+
+[postgres@rhel6lhr data]$ pg_ctl start
+waiting for server to start....2020-10-26 23:27:53.461 CST [27217] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2020-10-26 23:27:53.485 CST [27217] LOG:  listening on IPv6 address "::", port 5432
+2020-10-26 23:27:53.499 CST [27217] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2020-10-26 23:27:53.642 CST [27217] LOG:  redirecting log output to logging collector process
+2020-10-26 23:27:53.642 CST [27217] HINT:  Future log output will appear in directory "log".
+ done
+server started
+[postgres@rhel6lhr data]$ ps -ef |grep postgre
+root     26982 26944  0 23:10 pts/2    00:00:00 su - postgres
+postgres 26983 26982  0 23:10 pts/2    00:00:00 -bash
+postgres 27217     1  2 23:27 pts/2    00:00:00 /usr/local/pgsql/bin/postgres
+postgres 27218 27217  0 23:27 ?        00:00:00 postgres: logger             
+postgres 27219 27217  0 23:27 ?        00:00:00 postgres: startup   recovering 0000000100000001000000CB
+postgres 27220 27217  0 23:27 ?        00:00:00 postgres: checkpointer       
+postgres 27221 27217  0 23:27 ?        00:00:00 postgres: background writer   
+postgres 27222 27217  0 23:27 ?        00:00:00 postgres: stats collector    
+postgres 27238 26983  0 23:28 pts/2    00:00:00 ps -ef
+postgres 27239 26983  0 23:28 pts/2    00:00:00 grep postgre
+
+
+--备库查询主从延迟
+postgres=# SELECT pid,usename,client_addr,state,write_lag,flush_lag,replay_lag FROM pg_stat_replication; 
+ pid | usename | client_addr | state | write_lag | flush_lag | replay_lag 
+-----+---------+-------------+-------+-----------+-----------+------------
+(0 rows)
