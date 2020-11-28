@@ -1,0 +1,38 @@
+数据库连接认证
+2020年11月28日11:32:25
+1）pg_hba_conf生成
+pg_hba_conf是在数据库初始化data目录时，默认安装在data目录下的配置文件，常用格式是每行一条记录，每条记录各个字段之间由空，’/’,制表符分隔，不能跨行。每条记录表示一种连接类型，一个客户端IP地址范围、一个数据库名、一个用户名以及对匹配这些参数的连接使用的认证方式。
+2）pg_hba_conf的内容
+pg_hba_conf记录为下面7种格式之一：
+local		database		user		auth-method		[auth-options]
+host		database		user		address		auth-method		[auth-options]
+hostssl	database		user		address		auth-method		[auth-options]
+hostnossl	database		user		address		auth-method		[auth-options]
+host		database		user		ip-address	ip-mask	auth-method		[auth-options]
+hostssl	database		user		ip-address	ip-mask	auth-method		[auth-options]
+hostnossl	database		user		ip-address	ip-mask	auth-method		[auth-options]
+
+第一列表示连接方式，有四种local、host、hostssl、hostnossl
+local：匹配Unix域套接字连接，若没有这条记录不允许Unix域套接字连接
+host：匹配TCP/IP连接，同时可以匹配ssl与非ssl连接尝试，需要设置在postgresql.conf中的listen_address，默认监听本地连接
+hostssl：匹配TCP/IP连接，使用该选项，需要在编译时使用--with-openssl选项，且在postgresql.conf中ssl设置问on
+hostnossl：与hostssl相反，匹配不使用ssl的连接
+
+第二列表示数据库匹配
+all：匹配所有数据库
+sameuser：若被请求的数据库与用户同名，匹配
+samegroup：若被请求的用户是与数据库同名的组的成员，匹配
+replication：不指定特定的数据库，一般用于流复制
+其他可以为特定的数据库名字，多个数据库名用逗号分隔，或包含数据库名字的文件，文件名加前缀@
+
+第三列为用户名
+all：所有用户
+可以指定特定的用户或包含用户名的文件，文件名的前缀加@
+
+第四列为主机地址address
+指定匹配的客户端地址，可以是一个主机名也可以是一个IP地址范围
+
+第五列认证方法auth-method
+trust：允许连接
+reject：无条件拒绝
+MD5：需要客户端提供加密口令认证
