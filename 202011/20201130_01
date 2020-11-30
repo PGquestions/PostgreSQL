@@ -1,0 +1,22 @@
+自定义PostgreSQL登录提示符
+2020年11月30日22:33:06
+
+在postgres家目录下编辑隐藏文件.psqlrc
+vi .psqlrc
+\set PROMPT1 ‘%n@%/=>’
+[postgres@rhel6wcb ~]$ cat .psqlrc 
+\set PROMPT1 ‘%n@%/=>’
+[postgres@rhel6wcb ~]$ psql
+psql (11.7)
+Type "help" for help.
+
+‘postgres@postgres=>’\q
+
+SQL提示符的参数：
+参数	描述
+%n		当前登录的用户
+%/		当前登录的数据库
+%M		服务器主机名称
+%>		数据库监听端口
+%#		超级用户显示符
+%p		当前连接的后台进程编号
