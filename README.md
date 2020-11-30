@@ -4,6 +4,7 @@
 
 #所有文件列表  
 ------------------------------------------------------------
+202011/20201130_03 [《Linux下PostgreSQL开机自启动》](https://github.com/PGquestions/PostgreSQL/blob/main/202011/20201130_03)  
 202011/20201130_02 [《PostgreSQL索引膨胀》](https://github.com/PGquestions/PostgreSQL/blob/main/202011/20201130_02)  
 202011/20201130_01 [《自定义PostgreSQL登录提示符》](https://github.com/PGquestions/PostgreSQL/blob/main/202011/20201130_01)  
 202011/20201128_02 [《主备切换》](https://github.com/PGquestions/PostgreSQL/blob/main/202011/20201128_02)  
