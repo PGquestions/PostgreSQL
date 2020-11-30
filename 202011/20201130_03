@@ -1,0 +1,147 @@
+Linux下PostgreSQL开机自启动
+2020年11月30日23:23:54
+
+PG安装路径:/usr/local/pgsql
+DATA路径:/usr/local/pgsql/data
+
+[23:14:12][root@rhel6wcb ~]#  cp /usr/local/pgsql/postgresql-11.7/contrib/start-scripts/linux /etc/init.d/postgresql
+[23:14:21][root@rhel6wcb ~]# cd /etc/init.d/
+[23:14:46][root@rhel6wcb init.d]# chmod +x postgresql
+[23:16:59][root@rhel6wcb init.d]# cat postgresql 
+[23:16:59]#! /bin/sh
+[23:16:59]
+[23:16:59]# chkconfig: 2345 98 02
+[23:16:59]# description: PostgreSQL RDBMS
+[23:16:59]
+[23:16:59]# This is an example of a start/stop script for SysV-style init, such
+[23:16:59]# as is used on Linux systems.  You should edit some of the variables
+[23:16:59]# and maybe the 'echo' commands.
+[23:16:59]#
+[23:16:59]# Place this file at /etc/init.d/postgresql (or
+[23:16:59]# /etc/rc.d/init.d/postgresql) and make symlinks to
+[23:16:59]#   /etc/rc.d/rc0.d/K02postgresql
+[23:16:59]#   /etc/rc.d/rc1.d/K02postgresql
+[23:16:59]#   /etc/rc.d/rc2.d/K02postgresql
+[23:16:59]#   /etc/rc.d/rc3.d/S98postgresql
+[23:16:59]#   /etc/rc.d/rc4.d/S98postgresql
+[23:16:59]#   /etc/rc.d/rc5.d/S98postgresql
+[23:16:59]# Or, if you have chkconfig, simply:
+[23:16:59]# chkconfig --add postgresql
+[23:16:59]#
+[23:16:59]# Proper init scripts on Linux systems normally require setting lock
+[23:16:59]# and pid files under /var/run as well as reacting to network
+[23:16:59]# settings, so you should treat this with care.
+[23:16:59]
+[23:16:59]# Original author:  Ryan Kirkpatrick <pgsql@rkirkpat.net>
+[23:16:59]
+[23:16:59]# contrib/start-scripts/linux
+[23:16:59]
+[23:16:59]## EDIT FROM HERE
+[23:16:59]
+[23:16:59]# Installation prefix
+[23:16:59]prefix=/usr/local/pgsql
+[23:16:59]
+[23:16:59]# Data directory
+[23:16:59]PGDATA="/usr/local/pgsql/data"
+[23:16:59]
+[23:16:59]# Who to run the postmaster as, usually "postgres".  (NOT "root")
+[23:16:59]PGUSER=postgres
+[23:16:59]
+[23:16:59]# Where to keep a log file
+[23:16:59]PGLOG="$PGDATA/serverlog"
+[23:16:59]
+[23:16:59]# It's often a good idea to protect the postmaster from being killed by the
+[23:16:59]# OOM killer (which will tend to preferentially kill the postmaster because
+[23:16:59]# of the way it accounts for shared memory).  To do that, uncomment these
+[23:16:59]# three lines:
+[23:16:59]#PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
+[23:16:59]#PG_MASTER_OOM_SCORE_ADJ=-1000
+[23:16:59]#PG_CHILD_OOM_SCORE_ADJ=0
+[23:16:59]# Older Linux kernels may not have /proc/self/oom_score_adj, but instead
+[23:16:59]# /proc/self/oom_adj, which works similarly except for having a different
+[23:16:59]# range of scores.  For such a system, uncomment these three lines instead:
+[23:16:59]#PG_OOM_ADJUST_FILE=/proc/self/oom_adj
+[23:16:59]#PG_MASTER_OOM_SCORE_ADJ=-17
+[23:16:59]#PG_CHILD_OOM_SCORE_ADJ=0
+[23:16:59]
+[23:16:59]## STOP EDITING HERE
+[23:16:59]
+[23:16:59]# The path that is to be used for the script
+[23:16:59]PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+[23:16:59]
+[23:16:59]# What to use to start up the postmaster.  (If you want the script to wait
+[23:16:59]# until the server has started, you could use "pg_ctl start" here.)
+[23:16:59]DAEMON="$prefix/bin/postmaster"
+[23:16:59]
+[23:16:59]# What to use to shut down the postmaster
+[23:16:59]PGCTL="$prefix/bin/pg_ctl"
+[23:16:59]
+[23:16:59]set -e
+[23:16:59]
+[23:16:59]# Only start if we can find the postmaster.
+[23:16:59]test -x $DAEMON ||
+[23:16:59]{
+[23:16:59]        echo "$DAEMON not found"
+[23:16:59]        if [ "$1" = "stop" ]
+[23:16:59]        then exit 0
+[23:16:59]        else exit 5
+[23:16:59]        fi
+[23:16:59]}
+[23:16:59]
+[23:16:59]# If we want to tell child processes to adjust their OOM scores, set up the
+[23:16:59]# necessary environment variables.  Can't just export them through the "su".
+[23:16:59]if [ -e "$PG_OOM_ADJUST_FILE" -a -n "$PG_CHILD_OOM_SCORE_ADJ" ]
+[23:16:59]then
+[23:16:59]        DAEMON_ENV="PG_OOM_ADJUST_FILE=$PG_OOM_ADJUST_FILE PG_OOM_ADJUST_VALUE=$PG_CHILD_OOM_SCORE_ADJ"
+[23:16:59]fi
+[23:16:59]
+[23:16:59]
+[23:16:59]# Parse command line parameters.
+[23:16:59]case $1 in
+[23:16:59]  start)
+[23:16:59]        echo -n "Starting PostgreSQL: "
+[23:16:59]        test -e "$PG_OOM_ADJUST_FILE" && echo "$PG_MASTER_OOM_SCORE_ADJ" > "$PG_OOM_ADJUST_FILE"
+[23:16:59]        su - $PGUSER -c "$DAEMON_ENV $DAEMON -D '$PGDATA' >>$PGLOG 2>&1 &"
+[23:16:59]        echo "ok"
+[23:16:59]        ;;
+[23:16:59]  stop)
+[23:16:59]        echo -n "Stopping PostgreSQL: "
+[23:16:59]        su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
+[23:16:59]        echo "ok"
+[23:16:59]        ;;
+[23:16:59]  restart)
+[23:16:59]        echo -n "Restarting PostgreSQL: "
+[23:16:59]        su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
+[23:16:59]        test -e "$PG_OOM_ADJUST_FILE" && echo "$PG_MASTER_OOM_SCORE_ADJ" > "$PG_OOM_ADJUST_FILE"
+[23:16:59]        su - $PGUSER -c "$DAEMON_ENV $DAEMON -D '$PGDATA' >>$PGLOG 2>&1 &"
+[23:16:59]        echo "ok"
+[23:16:59]        ;;
+[23:16:59]  reload)
+[23:16:59]        echo -n "Reload PostgreSQL: "
+[23:16:59]        su - $PGUSER -c "$PGCTL reload -D '$PGDATA' -s"
+[23:16:59]        echo "ok"
+[23:16:59]        ;;
+[23:16:59]  status)
+[23:16:59]        su - $PGUSER -c "$PGCTL status -D '$PGDATA'"
+[23:16:59]        ;;
+[23:16:59]  *)
+[23:16:59]        # Print help
+[23:16:59]        echo "Usage: $0 {start|stop|restart|reload|status}" 1>&2
+[23:16:59]        exit 1
+[23:16:59]        ;;
+[23:16:59]esac
+[23:16:59]
+[23:16:59]exit 0
+[23:16:59]prefix=/usr/local/pgsql
+[23:16:59]PGDATA=/usr/local/pgsql/data
+[23:17:41][root@rhel6wcb init.d]# chkconfig --add postgresql
+[23:17:47][root@rhel6wcb init.d]# reboot
+[root@rhel6wcb ~]# ps -ef |grep postgres
+postgres 13344     1  0 23:19 ?        00:00:00 /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
+postgres 13368 13344  0 23:19 ?        00:00:00 postgres: checkpointer                                  
+postgres 13369 13344  0 23:19 ?        00:00:00 postgres: background writer                             
+postgres 13370 13344  0 23:19 ?        00:00:00 postgres: walwriter                                     
+postgres 13371 13344  0 23:19 ?        00:00:00 postgres: autovacuum launcher                           
+postgres 13372 13344  0 23:19 ?        00:00:00 postgres: stats collector                               
+postgres 13373 13344  0 23:19 ?        00:00:00 postgres: logical replication launcher                  
+root     13673 13634  0 23:22 pts/0    00:00:00 grep postgres
