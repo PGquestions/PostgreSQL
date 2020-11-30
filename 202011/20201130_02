@@ -1,0 +1,57 @@
+PostgreSQL索引膨胀
+2020年11月30日23:09:21
+
+通常是因为数据乱序写入导致的，索引页中的数据是有序的，而索引字段乱序写入，会导致索引频繁分裂，使得索引页并不是百分百填满，自然出现索引膨胀的情况。
+示例：
+先创建索引，在乱序写入数据
+create table t(id int);
+create index idx_t on t using btree(id);
+insert into t select random()*1000000 from generate_series(1,1000000);
+\di+ idx_t;
+[23:03:37]postgres@postgres=>create table t(id int);
+[23:03:38]CREATE TABLE
+[23:04:02]postgres@postgres=>create index idx_t on t using btree(id);
+[23:04:02]CREATE INDEX
+[23:04:45]postgres@postgres=>insert into t select random()*1000000 from generate_series(1,1000000);
+[23:04:55]INSERT 0 1000000
+[23:05:10]postgres@postgres=>\di+ idx_t;
+[23:05:10]                        List of relations
+[23:05:10] Schema | Name  | Type  |  Owner   | Table | Size  | Description 
+[23:05:10]--------+-------+-------+----------+-------+-------+-------------
+[23:05:10] public | idx_t | index | postgres | t     | 28 MB | 
+[23:05:10](1 row)
+[23:05:10]
+
+先创建索引，在顺序写入数据
+truncate table t;
+insert into select generate_series(1,1000000);
+\di+ idx_t;
+[23:05:21]postgres@postgres=>truncate table t;
+[23:05:21]TRUNCATE TABLE
+[23:05:47]postgres@postgres=>insert into t select generate_series(1,1000000);
+[23:05:50]INSERT 0 1000000
+[23:05:59]postgres@postgres=>\di+ idx_t;
+[23:05:59]                        List of relations
+[23:05:59] Schema | Name  | Type  |  Owner   | Table | Size  | Description 
+[23:05:59]--------+-------+-------+----------+-------+-------+-------------
+[23:05:59] public | idx_t | index | postgres | t     | 21 MB | 
+[23:05:59](1 row)
+[23:05:59]
+
+先插入数据再创建索引
+drop index idx_t;
+create index idx_t on t using btree(id);
+\di+ idx_t;
+[23:06:13]postgres@postgres=>drop index idx_t;
+[23:06:13]DROP INDEX
+[23:06:35]postgres@postgres=>create index idx_t on t using btree(id);
+[23:06:36]CREATE INDEX
+[23:06:45]postgres@postgres=>\di+ idx_t;
+[23:06:45]                        List of relations
+[23:06:45] Schema | Name  | Type  |  Owner   | Table | Size  | Description 
+[23:06:45]--------+-------+-------+----------+-------+-------+-------------
+[23:06:45] public | idx_t | index | postgres | t     | 21 MB | 
+[23:06:45](1 row)
+[23:06:45]
+
+可以发现，顺序写入数据的索引大小和重建索引后的索引大小一样，说明：顺序写入并不会导致索引膨胀
