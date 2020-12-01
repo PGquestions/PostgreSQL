@@ -4,7 +4,7 @@
 [DBA常用SQL](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201201_01)  
 #所有文件列表  
 
-
+202012/20201201_02 [《并行查询》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201201_02)  
 202012/20201201_01 [《DBA常用SQL》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201201_01)
 
 ------------------------------------------------------------
