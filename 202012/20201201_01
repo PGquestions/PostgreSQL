@@ -1,1 +1,7 @@
 DBA常用维护SQL
+--查询活动会话
+select * from pg_stat_activity where state ='active' and pid <> pg_backend_pid();
+
+--查询等待事件
+select * from pg_stat_activity where  pid <> pg_backend_pid() and wait_event is not null;
+
