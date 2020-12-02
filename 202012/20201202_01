@@ -1,0 +1,91 @@
+单个表误删除进行恢复
+2020年12月2日23:20:34
+恢复步骤：
+1）首先找到最近的备份文件（日常备份必不可少）
+2）创建一个新的数据库，并用备份文件进行恢复
+3）在新的数据库中将目标表的数据进行导出
+4）将该表数据进行恢复
+以下为测试示例：
+[postgres@rhel6wcb ~]$ pg_dump -h 127.0.0.1 -p 5432 -d test -Fc -f pg_dump.dmp
+[postgres@rhel6wcb ~]$ ls -lth
+total 35M
+-rw-rw-r-- 1 postgres postgres 35M Dec  2 22:23 pg_dump.dmp
+[postgres@rhel6wcb ~]$ psql
+psql (11.7)
+Type "help" for help.
+postgres@postgres=>\c test
+You are now connected to database "test" as user "postgres".
+postgres@test=>\dt+ test_big1
+                      List of relations
+ Schema |   Name    | Type  |  Owner   |  Size  | Description 
+--------+-----------+-------+----------+--------+-------------
+ public | test_big1 | table | postgres | 280 MB | 
+(1 row)
+postgres@test=>select count(*) from test_big1;
+  count  
+---------
+ 5000000
+(1 row)
+postgres@test=>drop table test_big1;
+DROP TABLE
+
+
+postgres@postgres=>create database test2;
+CREATE DATABASE
+[postgres@rhel6wcb ~]$ pg_restore -h 127.0.0.1 -p 5432 -d test2 pg_dump.dmp
+[postgres@rhel6wcb ~]$ psql
+psql (11.7)
+Type "help" for help.
+
+postgres@postgres=>\c test2
+You are now connected to database "test2" as user "postgres".
+postgres@test2=>\dt+ test_big1;
+                      List of relations
+ Schema |   Name    | Type  |  Owner   |  Size  | Description 
+--------+-----------+-------+----------+--------+-------------
+ public | test_big1 | table | postgres | 280 MB | 
+(1 row)
+[postgres@rhel6wcb ~]$ pg_dump -h 127.0.0.1 -p 5432 -d test2 -t test_big1 -Fp -f test_big1.sql
+[postgres@rhel6wcb ~]$ ls -lht
+total 261M
+-rw-rw-r-- 1 postgres postgres 227M Dec  2 22:27 test_big1.sql
+-rw-rw-r-- 1 postgres postgres  35M Dec  2 22:23 pg_dump.dmp
+[postgres@rhel6wcb ~]$ psql test <test_big1.sql
+SET
+SET
+SET
+SET
+SET
+ set_config 
+------------
+ 
+(1 row)
+
+SET
+SET
+SET
+SET
+SET
+SET
+CREATE TABLE
+ALTER TABLE
+COPY 5000000
+CREATE INDEX
+[postgres@rhel6wcb ~]$ psql
+psql (11.7)
+Type "help" for help.
+
+postgres@postgres=>\c test
+You are now connected to database "test" as user "postgres".
+postgres@test=>\dt+ test_big1;
+                      List of relations
+ Schema |   Name    | Type  |  Owner   |  Size  | Description 
+--------+-----------+-------+----------+--------+-------------
+ public | test_big1 | table | postgres | 280 MB | 
+(1 row)
+postgres@test=>select count(*) from test_big1;
+  count  
+---------
+ 5000000
+(1 row)
+到此误删除的表的数据已经恢复。
