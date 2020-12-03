@@ -1,0 +1,53 @@
+PostgreSQL 11分区表
+2020年12月3日23:12:34
+
+1）创建父表
+2）创建分区
+3）在分区上创建相应的索引
+
+postgres@postgres=>create table log_par (id serial,user_id int4,create_time timestamp(0) without time zone)partition by range(create_time);
+CREATE TABLE
+postgres@postgres=>create table log_par_his partition of log_par for values from ('2020-09-01') to ('2020-10-01');
+CREATE TABLE
+postgres@postgres=>create table log_par_202010 partition of log_par for values from ('2020-10-01') to ('2020-11-01');
+CREATE TABLE
+postgres@postgres=>create table log_par_202011 partition of log_par for values from ('2020-11-01') to ('2020-12-01');
+CREATE TABLE
+postgres@postgres=>create index idx_log_par_his_ctime on log_par_his using btree(create_time);
+CREATE INDEX
+postgres@postgres=>create index idx_log_par_202010_ctime on log_par_202010 using btree(create_time);
+CREATE INDEX
+postgres@postgres=>create index idx_log_par_202011_ctime on log_par_202011 using btree(create_time);
+CREATE INDEX
+postgres@postgres=>insert into log_par(user_id,create_time) select round(1000000*random()),generate_series('2020-09-02'::date,'2020-11-30'::date,'1 minute');
+INSERT 0 128161
+postgres@postgres=>\dt+ log_par*
+                         List of relations
+ Schema |      Name      | Type  |  Owner   |  Size   | Description 
+--------+----------------+-------+----------+---------+-------------
+ public | log_par        | table | postgres | 0 bytes | 
+ public | log_par_202010 | table | postgres | 1960 kB | 
+ public | log_par_202011 | table | postgres | 1832 kB | 
+ public | log_par_his    | table | postgres | 1832 kB | 
+(4 rows)
+--添加分区
+postgres@postgres=>create table log_par_202012 partition of log_par for values from ('2020-12-01') to ('2021-01-01');
+CREATE TABLE
+--解绑分区
+postgres@postgres=>alter table log_par detach partition log_par_202012;
+ALTER TABLE
+--重新绑定分区
+postgres@postgres=>alter table log_par attach partition log_par_202012 for values from ('2020-12-01') to ('2021-01-01');
+ALTER TABLE
+--删除分区
+postgres@postgres=>drop table log_par_202010;
+DROP TABLE
+postgres@postgres=>\dt+ log*
+                         List of relations
+ Schema |      Name      | Type  |  Owner   |  Size   | Description 
+--------+----------------+-------+----------+---------+-------------
+ public | log_par        | table | postgres | 0 bytes | 
+ public | log_par_202011 | table | postgres | 1832 kB | 
+ public | log_par_202012 | table | postgres | 0 bytes | 
+ public | log_par_his    | table | postgres | 1832 kB | 
+(4 rows)
