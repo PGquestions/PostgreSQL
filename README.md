@@ -4,6 +4,7 @@
 [<DBA常用SQL>](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201201_01)  
 [<PostgreSQL 实时监控监控--低频>](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201204_02)  
 #所有文件列表  
+202012/20201204_02 [《PostgreSQL 实时监控监控--低频》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201204_02)  
 202012/20201204_01 [《操作系统性能工具》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201204_01)  
 202012/20201203_01 [《PostgreSQL 11 分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201203_01)  
 202012/20201202_01 [《单个表误删除进行恢复》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201202_01)  
