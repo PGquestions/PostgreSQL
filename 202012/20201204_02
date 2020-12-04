@@ -1,0 +1,21 @@
+PostgreSQL 实时监控监控--低频
+时间：2020年12月4日22:45:05
+
+--查询数据库的数据年龄
+select datname,age(datfrozenxid) from pg_database order by 2 desc;
+postgres@postgres=>select datname,age(datfrozenxid) from pg_database order by 2 desc;
+  datname  | age 
+-----------+-----
+ postgres  |  79
+ template1 |  79
+ template0 |  79
+ test      |  79
+ test2     |  79
+(5 rows)
+
+
+--查询某个数据库全表扫描次数TOP10对象
+select current_database(),* from pg_stat_all_tables order by seq_scan desc limit 10;
+
+--全表扫描返回记录数TOP10的表
+select current_database(),* from pg_stat_all_tables order by seq_tup_read desc limit 10;
