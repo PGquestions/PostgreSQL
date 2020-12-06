@@ -3,7 +3,7 @@
 持续更新（未完待续）  
 [<DBA常用SQL>](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201201_01)  
 [<PostgreSQL 实时监控监控--低频>](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201204_02)  
-[《PostgreSQL 巡检》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_02)
+[《PostgreSQL 巡检》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_02)  
 [《定时删除分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_03)  
 [《定时创建分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_04)  
 #所有文件列表  
