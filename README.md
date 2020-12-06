@@ -1,9 +1,15 @@
 # PostgreSQL
 
-持续更新  
+持续更新（未完待续）  
 [<DBA常用SQL>](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201201_01)  
 [<PostgreSQL 实时监控监控--低频>](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201204_02)  
+[《PostgreSQL 巡检》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_02)
+[《定时删除分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_03)  
+[《定时创建分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_04)  
 #所有文件列表  
+202012/20201206_04 [《定时创建分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_04)  
+202012/20201206_03 [《定时删除分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_03)  
+202012/20201206_02 [《PostgreSQL 巡检》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_02)  
 202012/20201206_01 [《PostgreSQL 二进制、十进制、十六进制》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_01)  
 202012/20201204_02 [《PostgreSQL 实时监控监控--低频》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201204_02)  
 202012/20201204_01 [《操作系统性能工具》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201204_01)  
