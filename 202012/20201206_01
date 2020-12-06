@@ -1,0 +1,75 @@
+PostgreSQL 二进制、十进制、十六进制
+2020年12月6日23:12:43
+
+二进制转十进制
+postgres@test=>SELECT B'1010'::int; 
+ int4 
+------
+   10
+(1 row)
+二进制转十六进制
+postgres@test=>SELECT to_hex(B'1010'::int); 
+ to_hex 
+--------
+ a
+(1 row)
+
+
+十进制转十六进制
+postgres@test=>SELECT to_hex(10);
+ to_hex 
+--------
+ a
+(1 row)
+
+十进制转二进制（注意截断）
+postgres@test=>SELECT 10::bit(4);
+ bit  
+------
+ 1010
+(1 row)
+
+postgres@test=>SELECT 10::bit(40); 
+                   bit                    
+------------------------------------------
+ 0000000000000000000000000000000000001010
+(1 row)
+
+postgres@test=>SELECT 10::bit(2);
+ bit 
+-----
+ 10
+(1 row)
+
+十六进制转十进制
+postgres@test=>SELECT x'A'::int;
+ int4 
+------
+   10
+(1 row)
+
+
+十六进制转二进制	
+postgres@test=>SELECT x'A'::bit(4);
+ bit  
+------
+ 1010
+(1 row)
+注意：除非明确知道转换后二进制的位数， 不然先转成十进制在转换成二进制。
+postgres@test=>SELECT x'A'::bit(8);
+   bit    
+----------
+ 10100000
+(1 row)
+
+postgres@test=>select (x'A'::int)::bit(8);
+   bit    
+----------
+ 00001010
+(1 row)
+
+postgres@test=>select x'bcd'::varbit; 
+    varbit    
+--------------
+ 101111001101
+(1 row)
