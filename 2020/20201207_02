@@ -1,0 +1,67 @@
+逻辑复制压测
+2020年12月7日23:05:30
+PG版本：11.7
+
+A:发布节点
+B:订阅节点
+单边insert压测
+A:
+postgres@test=>create table t_per1(id int4,name text,create_time timestamp default clock_timestamp());
+CREATE TABLE
+postgres@test=>grant select on t_per1 to logical_user;
+GRANT
+postgres@test=>alter publication pub1 add table t_per1;
+ALTER PUBLICATION
+
+B:
+postgres@test=>create table t_per1(id int4,name text,create_time timestamp default clock_timestamp());
+CREATE TABLE
+postgres@test=>alter subscription sub1 refresh publication;
+ALTER SUBSCRIPTION
+
+a:
+[postgres@rhel6wcb ~]$ pgbench -c 8 -T 120 -d test -U postgres -n N -M prepared -f insert.sql >insert.out 2>&1
+postgres@test=>select pid,usename,state,pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) replay_dely from pg_stat_replication;
+  pid  |   usename    |   state   | replay_dely 
+-------+--------------+-----------+-------------
+ 15009 | logical_user | streaming |       11720
+(1 row)
+postgres@test=>select pid,usename,state,pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) replay_dely from pg_stat_replication;
+  pid  |   usename    |   state   | replay_dely 
+-------+--------------+-----------+-------------
+ 15009 | logical_user | streaming |        8088
+(1 row)
+replay_dely显示逻辑复制WAL应用延迟。
+
+单表update压力测试
+a:
+postgres@test=>create table t_per2(id int4 primary key,name text,create_time timestamp default clock_timestamp());
+CREATE TABLE
+postgres@test=>insert into t_per2 (id) select generate_series(1,1000000);
+INSERT 0 1000000
+postgres@test=>grant select on t_per2 to logical_user; 
+GRANT
+postgres@test=>alter publication pub1 add table t_per2;
+ALTER PUBLICATION
+
+
+b:
+postgres@test=>create table t_per2(id int4 primary key,name text,create_time timestamp default clock_timestamp());
+CREATE TABLE
+postgres@test=>alter subscription sub1 refresh publication;
+ALTER SUBSCRIPTION
+postgres@test=>select count(1) from t_per2;
+  count  
+---------
+ 1000000
+(1 row)
+
+a:
+[postgres@rhel6wcb ~]$ pgbench -c 8 -T 120 -d test -U postgres -n N -M prepared -f insert.sql >insert.out 2>&1
+
+postgres@test=>select pid,usename,state,pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) replay_dely from pg_stat_replication;
+  pid  |   usename    |   state   | replay_dely 
+-------+--------------+-----------+-------------
+ 15009 | logical_user | streaming |        2184
+(1 row)
+replay_dely显示逻辑复制WAL应用延迟。
