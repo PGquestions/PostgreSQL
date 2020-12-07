@@ -1,0 +1,201 @@
+逻辑复制的搭建
+pg版本：11.7
+version：1.0
+
+发布节点：192.168.232.20
+订阅节点：192.168.232.21
+发布节点调整参数：
+[postgres@rhel6wcb data]$ more postgresql.conf | grep wal_level
+wal_level = logical                     # minimal, replica, or logical
+[postgres@rhel6wcb data]$ more postgresql.conf | grep max_replication_slots
+max_replication_slots = 8       # max number of replication slots
+
+订阅节点调整参数：
+[postgres@rhel6wcb data]$ more postgresql.conf |grep max_replication_slots
+max_replication_slots = 8       # max number of replication slots
+[postgres@rhel6wcb data]$ more postgresql.conf |grep max_logical_replication
+max_logical_replication_workers = 8     # taken from max_worker_processes
+#max_sync_workers_per_subscription = 2  # taken from max_logical_replication_workers
+
+发布节点创建逻辑复制用户
+postgres@postgres=>\c test
+You are now connected to database "test" as user "postgres".
+postgres@test=>create user logical_user replication login connection limit 8 encrypted password 'logical_user';
+CREATE ROLE
+postgres@test
+postgres@test=>create table t_lr1(id int4,name text);
+CREATE TABLE
+postgres@test=>insert into t_lr1 values (1,'a');
+INSERT 0 1
+postgres@test=>create publication pub1 for table t_lr1;
+CREATE PUBLICATION
+postgres@test=>select * from pg_publication;
+ pubname | pubowner | puballtables | pubinsert | pubupdate | pubdelete | pubtruncate 
+---------+----------+--------------+-----------+-----------+-----------+-------------
+ pub1    |       10 | f            | t         | t         | t         | t
+(1 row)
+
+订阅节点：
+postgres@test=>create table t_lr1(id int4,name text);
+CREATE TABLE
+postgres@test=>create subscription sub1 connection 'host=192.168.232.20 port=5432 dbname=test user=logical_user' publication pub1;
+NOTICE:  created replication slot "sub1" on publisher
+CREATE SUBSCRIPTION
+
+发布节点
+postgres@test=>select slot_name,plugin,slot_type,database,active,restart_lsn from pg_replication_slots;
+ slot_name |  plugin  | slot_type | database | active | restart_lsn 
+-----------+----------+-----------+----------+--------+-------------
+ sub1      | pgoutput | logical   | test     | t      | 0/59EC7260
+(1 row)
+
+订阅节点
+postgres@test=>select * from pg_subscription;
+-[ RECORD 1 ]---+------------------------------------------------------------
+subdbid         | 24589
+subname         | sub1
+subowner        | 10
+subenabled      | t
+subconninfo     | host=192.168.232.20 port=5432 dbname=test user=logical_user
+subslotname     | sub1
+subsynccommit   | off
+subpublications | {pub1}
+
+postgres@test=>select * from t_lr1;
+ id | name 
+----+------
+(0 rows)
+
+订阅节点查看日志：
+2020-12-07 21:52:20.776 CST [14062] LOG:  logical replication apply worker for subscription "sub1" has started
+2020-12-07 21:52:20.782 CST [14063] LOG:  logical replication table synchronization worker for subscription "sub1", table "t_lr1" has
+ started
+2020-12-07 21:52:20.873 CST [14063] ERROR:  could not start initial contents copy for table "public.t_lr1": ERROR:  permission denied
+ for table t_lr1
+2020-12-07 21:52:20.874 CST [13878] LOG:  background worker "logical replication worker" (PID 14063) exited with exit code 1
+2020-12-07 21:52:25.891 CST [14064] LOG:  logical replication table synchronization worker for subscription "sub1", table "t_lr1" has
+ started
+2020-12-07 21:52:25.968 CST [14064] ERROR:  could not start initial contents copy for table "public.t_lr1": ERROR:  permission denied
+ for table t_lr1
+发现是权限问题。需要在发布节点添加权限。
+
+发布节点：
+postgres@test=>grant usage on schema public to logical_user;
+GRANT
+postgres@test=>grant select on t_lr1 to logical_user;
+GRANT
+
+订阅节点：
+postgres@test=>select * from t_lr1;
+ id | name 
+----+------
+  1 | a
+(1 row)
+
+
+检验insert、update、delete操作。
+发布节点：
+postgres@test=>insert into t_lr1 values (2,'b');
+INSERT 0 1
+
+订阅节点
+postgres@test=>select * from t_lr1 where id =2;
+ id | name 
+----+------
+  2 | b
+(1 row)
+
+发布节点
+postgres@test=>update t_lr1 set name = 'bbb' where id = 2;
+ERROR:  cannot update table "t_lr1" because it does not have a replica identity and publishes updates
+HINT:  To enable updating the table, set REPLICA IDENTITY using ALTER TABLE.
+postgres@test=>alter table t_lr1 add primary key (id);
+ALTER TABLE
+订阅节点：
+postgres@test=>alter table t_lr1 add primary key (id);
+ALTER TABLE
+
+发布节点：
+postgres@test=>update t_lr1 set name = 'bbb' where id = 2;
+UPDATE 1
+订阅节点：
+postgres@test=>select * from t_lr1 where id =2;
+ id | name 
+----+------
+  2 | bbb
+(1 row)
+
+发布节点：
+postgres@test=>delete from t_lr1 where id =2;
+DELETE 1
+订阅节点：
+postgres@test=>select * from t_lr1;
+ id | name 
+----+------
+  1 | a
+(1 row)
+
+发布节点添加同步表：
+postgres@test=>create table t_big(id int4 primary key,create_time timestamp(0) default clock_timestamp(),name character varying(32));
+CREATE TABLE
+postgres@test=>insert into t_big(id,name) select n,n*random()*1000 from generate_series(1,1000000) n;
+INSERT 0 1000000
+postgres@test=>grant select on t_big to logical_user;
+GRANT
+postgres@test=>alter publication pub1 add table t_big;
+ALTER PUBLICATION
+postgres@test=>\dRp+ pub1
+                        Publication pub1
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates 
+----------+------------+---------+---------+---------+-----------
+ postgres | f          | t       | t       | t       | t
+Tables:
+    "public.t_big"
+    "public.t_lr1"
+
+postgres@test=>select * from pg_publication_tables;
+ pubname | schemaname | tablename 
+---------+------------+-----------
+ pub1    | public     | t_lr1
+ pub1    | public     | t_big
+(2 rows)
+
+订阅节点添加相应的表结构：
+postgres@test=>create table t_big(id int4 primary key,create_time timestamp(0) default clock_timestamp(),name character varying(32));
+CREATE TABLE
+postgres@test=>select * from t_big;
+ id | create_time | name 
+----+-------------+------
+(0 rows)
+
+postgres@test=>alter subscription sub1 refresh publication;
+ALTER SUBSCRIPTION
+postgres@test=>select count(*) from t_big;
+  count  
+---------
+ 1000000
+(1 row)
+
+
+
+逻辑复制的启动，停止：
+在订阅节点开启订阅，关闭订阅即可。
+postgres@test=>select subname,subenabled,subpublications from pg_subscription;
+ subname | subenabled | subpublications 
+---------+------------+-----------------
+ sub1    | t          | {pub1}
+(1 row)
+postgres@test=>alter subscription sub1 disable;
+ALTER SUBSCRIPTION
+postgres@test=>select subname,subenabled,subpublications from pg_subscription;
+ subname | subenabled | subpublications 
+---------+------------+-----------------
+ sub1    | f          | {pub1}
+(1 row)
+postgres@test=>alter subscription sub1 enable;
+ALTER SUBSCRIPTION
+postgres@test=>select subname,subenabled,subpublications from pg_subscription;
+ subname | subenabled | subpublications 
+---------+------------+-----------------
+ sub1    | t          | {pub1}
+(1 row)
