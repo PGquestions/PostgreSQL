@@ -7,6 +7,7 @@
 [《定时删除分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_03)  
 [《定时创建分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_04)  
 #所有文件列表  
+202012/20201207_02 [《逻辑复制压测》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201207_02)  
 202012/20201207_01 [《逻辑复制的搭建》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201207_01)  
 202012/20201206_04 [《定时创建分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_04)  
 202012/20201206_03 [《定时删除分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_03)  
