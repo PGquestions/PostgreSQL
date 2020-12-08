@@ -1,0 +1,55 @@
+PostgreSQL主库创建表空间导致备库宕机
+2020年12月8日23:46:00
+PG版本：11.7
+
+主库创建表空间：
+[postgres@rhel6wcb /]$ mkdir -p /home/postgres/pg11/pg_tbs/
+[postgres@rhel6wcb /]$ psql
+psql (11.7)
+Type "help" for help.
+
+postgres@postgres=>create tablespace tbs_his owner test location '/home/postgres/pg11/pg_tbs';
+CREATE TABLESPACE
+
+备库查询日志，发现数据库宕机：
+[postgres@rhel6wcb log]$ more postgresql-2020-12-08_233114.log
+2020-12-08 23:31:14.757 CST [15922] LOG:  database system was interrupted; last known up at 2020-12-08 23:25:15 CST
+2020-12-08 23:31:14.809 CST [15922] LOG:  entering standby mode
+2020-12-08 23:31:14.812 CST [15922] LOG:  redo starts at 0/75000028
+2020-12-08 23:31:14.813 CST [15922] LOG:  invalid record length at 0/75000CA8: wanted 24, got 0
+2020-12-08 23:31:14.817 CST [15925] LOG:  started streaming WAL from primary at 0/75000000 on timeline 1
+2020-12-08 23:31:14.839 CST [15922] LOG:  consistent recovery state reached at 0/75000CD0
+2020-12-08 23:31:14.840 CST [15920] LOG:  database system is ready to accept read only connections
+2020-12-08 23:38:48.577 CST [15922] FATAL:  directory "/home/postgres/pg11/pg_tbs" does not exist
+2020-12-08 23:38:48.577 CST [15922] HINT:  Create this directory for the tablespace before restarting the server.
+2020-12-08 23:38:48.577 CST [15922] CONTEXT:  WAL redo at 0/76000C78 for Tablespace/CREATE: 24634 "/home/postgres/pg11/pg_tbs"
+2020-12-08 23:38:48.578 CST [15920] LOG:  startup process (PID 15922) exited with exit code 1
+2020-12-08 23:38:48.578 CST [15920] LOG:  terminating any other active server processes
+2020-12-08 23:38:48.580 CST [15920] LOG:  database system is shut down
+
+创建相应的目录，然后重启备库
+[postgres@rhel6wcb log]$ mkdir -p /home/postgres/pg11/pg_tbs/
+[postgres@rhel6wcb log]$ pg_ctl start
+
+在主库可以查询到相应的wal发送日志，备库已经恢复正常
+postgres@postgres=>select * from pg_stat_replication;
+-[ RECORD 1 ]----+------------------------------
+pid              | 16301
+usesysid         | 24633
+usename          | repuser
+application_name | walreceiver
+client_addr      | 192.168.232.21
+client_hostname  | 
+client_port      | 49307
+backend_start    | 2020-12-08 23:40:05.793836+08
+backend_xmin     | 
+state            | streaming
+sent_lsn         | 0/76000E28
+write_lsn        | 0/76000E28
+flush_lsn        | 0/76000E28
+replay_lsn       | 0/76000E28
+write_lag        | 
+flush_lag        | 
+replay_lag       | 
+sync_priority    | 0
+sync_state       | async
