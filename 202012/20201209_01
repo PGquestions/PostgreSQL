@@ -62,3 +62,8 @@ ate | replication_sync_state | last_status_change
  1       | 192.168.232.20 | 5432 | up     | 0.500000  | primary | 0          | false             | 0                 |               
     |                        | 2020-12-09 22:40:33
 (2 rows)
+
+[postgres@rhel6wcb ~]$  psql -h 192.168.232.21 -p 9999 -U postgres postgres
+psql: ERROR:  md5 authentication failed
+DETAIL:  password does not match
+有可能pool_passwd里面配置的密码错误
