@@ -1,0 +1,64 @@
+pgpool常见问题处理
+2020年12月9日22:44:45
+PG版本：11.7
+
+
+pgpool两个节点都是standby：
+postgres@postgres=>show pool_nodes;
+ node_id |    hostname    | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_st
+ate | replication_sync_state | last_status_change  
+---------+----------------+------+--------+-----------+---------+------------+-------------------+-------------------+---------------
+----+------------------------+---------------------
+ 0       | 192.168.232.21 | 5432 | up     | 0.500000  | standby | 0          | true              | 0                 |               
+    |                        | 2020-12-09 22:25:38
+ 1       | 192.168.232.20 | 5432 | down   | 0.500000  | standby | 0          | false             | 0                 |               
+    |                        | 2020-12-09 22:25:38
+(2 rows)
+
+解决方案：
+[root@rhel6wcb etc]# pgpool stop
+.done.
+[root@rhel6wcb etc]# pgpool -C -D
+[postgres@rhel6wcb ~]$  psql -h 192.168.232.21 -p 9999 -U postgres postgres
+postgres@postgres=>show pool_nodes;
+ node_id |    hostname    | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_st
+ate | replication_sync_state | last_status_change  
+---------+----------------+------+--------+-----------+---------+------------+-------------------+-------------------+---------------
+----+------------------------+---------------------
+ 0       | 192.168.232.21 | 5432 | up     | 0.500000  | standby | 0          | false             | 0                 |               
+    |                        | 2020-12-09 22:28:47
+ 1       | 192.168.232.20 | 5432 | up     | 0.500000  | primary | 0          | true              | 0                 |               
+    |                        | 2020-12-09 22:28:47
+(2 rows)
+
+
+PostgreSQL数据库关闭后再打开，在pgpool里面查询状态是down，需要重新对接pgpool
+postgres@postgres=>show pool_nodes;
+ node_id |    hostname    | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_st
+ate | replication_sync_state | last_status_change  
+---------+----------------+------+--------+-----------+---------+------------+-------------------+-------------------+---------------
+----+------------------------+---------------------
+ 0       | 192.168.232.21 | 5432 | up     | 0.500000  | standby | 0          | true              | 0                 |               
+    |                        | 2020-12-09 22:28:47
+ 1       | 192.168.232.20 | 5432 | down   | 0.500000  | standby | 0          | false             | 0                 |               
+    |                        | 2020-12-09 22:32:04
+(2 rows)
+
+[root@rhel6wcb etc]# more pcp.conf|grep pgpool
+# This file contains user ID and his password for pgpool
+# users. These users are authorized ONLY for pgpool 
+pgpool:ba777e4c2f15c11ea8ac3be7e0440aa0
+[root@rhel6wcb etc]# pcp_attach_node -h 192.168.232.20 -U pgpool 1
+Password: 
+pcp_attach_node -- Command Successful
+
+postgres@postgres=>show pool_nodes;
+ node_id |    hostname    | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_st
+ate | replication_sync_state | last_status_change  
+---------+----------------+------+--------+-----------+---------+------------+-------------------+-------------------+---------------
+----+------------------------+---------------------
+ 0       | 192.168.232.21 | 5432 | up     | 0.500000  | standby | 0          | true              | 0                 |               
+    |                        | 2020-12-09 22:40:33
+ 1       | 192.168.232.20 | 5432 | up     | 0.500000  | primary | 0          | false             | 0                 |               
+    |                        | 2020-12-09 22:40:33
+(2 rows)
