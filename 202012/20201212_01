@@ -1,0 +1,23 @@
+pgpool-II主备切换
+2020年12月12日22:38:33
+version：1.0
+failover_stream.sh待优化
+
+[postgres@rhel6wcb etc]$ more failover_stream.sh 
+#!/bin/bash
+ ssh  postgres@pghost5 /usr/local/pgsql/bin/pg_ctl promote -D /usr/local/pgsql/data
+ 
+主库停数据库：
+[postgres@rhel6wcb etc]$ pg_ctl stop
+waiting for server to shut down.... done
+server stopped
+查看备库，可以发现已经升为主库了
+[postgres@rhel6wcb data]$ ls -lth recovery*
+-rw-rw-r-- 1 postgres postgres 134 Dec 12 22:25 recovery.done
+
+在原主库进行pgpool连接并进行创建表
+[postgres@rhel6wcb etc]$ psql -h 192.168.232.21 -p 9999 -U postgres postgres
+psql (11.7)
+Type "help" for help.
+postgres@postgres=>create table t1_1(id int4);
+CREATE TABLE
