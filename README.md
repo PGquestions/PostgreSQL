@@ -1,11 +1,5 @@
 # PostgreSQL
-
-持续更新（未完待续）  
-[<DBA常用SQL>](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201201_01)  
-[<PostgreSQL 实时监控监控--低频>](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201204_02)  
-[《PostgreSQL 巡检》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_02)  
-[《定时删除分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_03)  
-[《定时创建分区表》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201206_04)  
+ 
 #所有文件列表  
 202012/20201212_01 [《pgpool-II主备切换[未完待续]》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201212_01)  
 202012/20201209_01 [《pgpool常见问题处理》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201209_01)  
