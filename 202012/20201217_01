@@ -1,0 +1,39 @@
+PostgreSQL系统表（1）pg_class
+
+pg_class记录表和几乎所有具有列或者像表的东西。这包括索引、序列、视图、物化视图、组合类型和TOAST表。
+pg_class中的一些逻辑标志被以一种懒惰的方式维护：在正确状态时它们被保证为真，但是当条件不再为真时它们并不会被立刻重置为假。
+
+名称 			类型 		引用 				描述 
+oid 			oid  							行标识符 
+relname 		name  							表、索引、视图等的名字 
+relnamespace 	oid 		pg_namespace.oid 	包含该关系的名字空间的OID  
+reltype 		oid 		pg_type.oid 		可能存在的表行类型所对应数据类型的OID（对索引为0，索引没有pg_type项）  
+reloftype 		oid 		pg_type.oid 		对于有类型的表，为底层组合类型的OID，对于其他所有关系为0  
+relowner 		oid 		pg_authid.oid 		关系的拥有者 
+relam 			oid 		pg_am.oid 			如果这是一个表或者索引，表示索引使用的访问方法（堆、B树、哈希等） 
+relfilenode 	oid  							该关系的磁盘文件的名字，0表示这是一个“映射”关系，其磁盘文件名取决于低层状态 
+reltablespace 	oid 		pg_tablespace.oid 	该关系所存储的表空间。如果为0，使用数据库的默认表空间。（如果关系无磁盘文件时无意义）  
+relpages 		int4  							该表磁盘表示的尺寸，以页面计（页面尺寸为BLCKSZ）。这只是一个由规划器使用的估计值。它被VACUUM、ANALYZE以及一些DDL命令（如CREATE INDEX）所更新。  
+reltuples 		float4  						表中的存活行数。这只是一个由规划器使用的估计值。它被VACUUM、ANALYZE以及一些DDL命令（如CREATE INDEX）所更新。  
+relallvisible 	int4  							在表的可见性映射表中被标记为全可见的页数。这只是一个由规划器使用的估计值。它被VACUUM、ANALYZE以及一些DDL命令（如CREATE INDEX）所更新。  
+reltoastrelid 	oid 		pg_class.oid 		与该表相关联的TOAST表的OID，如果没有则为0。TOAST表将大属性“线外”存储在一个二级表中。  
+relhasindex 	bool  							如果这是一个表并且其上建有（或最近建有）索引则为真  
+relisshared 	bool  							如果该表在集簇中的所有数据库间共享则为真。只有某些系统目录（如pg_database）是共享的。  
+relpersistence 	char  							p = 永久表，u = 无日志表， t = 临时表  
+relkind 		char  							r = 普通表， i = 索引， S = 序列， t = TOAST表， v = 视图， m = 物化视图， c = 组合类型， f = 外部表， p = 分区表， I = 分区索引  
+relnatts 		int2  							关系中用户列的数目（系统列不计算在内）。在pg_attribute中必须有这么多对应的项。另请参阅pg_attribute.attnum。  
+relchecks 		int2  							表上CHECK约束的数目，参见pg_constraint目录  
+relhasrules 	bool  							如果表有（或曾有）规则则为真，参见 pg_rewrite目录  
+relhastriggers 	bool  							如果表有（或曾有）触发器则为真，参见 pg_trigger目录  
+relhassubclass 	bool  							如果表或者索引有（或曾有）任何继承子女则为真  
+relrowsecurity 	bool  							如果表上启用了行级安全性则为真，参见 pg_policy目录  
+relforcerowsecurity bool  						如果行级安全性（启用时）也适用于表拥有者则为真，参见 pg_policy目录  
+relispopulated 	bool  							如果表已被填充则为真（对于所有关系该列都为真，但对于某些物化视图却不是） 
+relreplident 	char  							用来为行形成“replica identity”的列： d = 默认 (主键，如果存在), n = 无, f = 所有列 i = 索引的indisreplident被设置或者为默认  
+relispartition 	bool  							如果表或索引是一个分区，则为真 
+relrewrite 		oid 		pg_class.oid 		对于在要求表重写的DDL操作期间被写入的新关系，这个域包含原始关系的OID，否则为0。那种状态仅在内部可见，对于一个用户可见的关系这个域应该从不包含不是0的值。  
+relfrozenxid 	xid  							在此之前的所有事务ID在表中已经被替换为一个永久的（“冻结的”) 事务ID。这用于跟踪表是否需要被清理，以便阻止事务ID回卷或者允许pg_xact被收缩。如果该关系不是一个表则为0（InvalidTransactionId）。  
+relminmxid 		xid  							在此之前的多事务ID在表中已经被替换为一个事务ID。这被用于跟踪表是否需要被清理，以阻止 多事务ID回卷或者允许pg_multixact被收缩。如果关系不是一个表则 为0（InvalidMultiXactId）。  
+relacl 			aclitem[]  						访问权限，更多信息参见第5.7节  
+reloptions 		text[]  						访问方法相关的选项，以“keyword=value”字符串形式  
+relpartbound 	pg_node_tree  					如果表示一个分区（见relispartition），分区边界的内部表达
