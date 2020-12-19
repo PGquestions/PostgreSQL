@@ -1,6 +1,13 @@
 # PostgreSQL
  
 ## 所有文件列表  
+202012/20201219_08.md [《PostgreSQL 12系统表(9)pg_settings》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_08.md) 
+202012/20201219_07.md [《PostgreSQL 12系统表(8)pg_indexes》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_07.md)  
+202012/20201219_06.md [《PostgreSQL 12系统表(7)pg_sequence》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_06.md)  
+202012/20201219_05.md [《PostgreSQL 12系统表(6)pg_namespace》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_05.md)  
+202012/20201219_04.md [《PostgreSQL 12系统表(5)pg_index》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_04.md)  
+202012/20201219_03.md [《PostgreSQL 12系统表(4)pg_constraint》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_03.md)  
+202012/20201219_02.md [《PostgreSQL 12系统表(3)pg_tablespace》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_02.md)  
 202012/20201219_01.md [《PostgreSQL 12系统表(2)pg_tables》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_01.md)  
 202012/20201217_01    [《PostgreSQL 12系统表(1)pg_class》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201217_01)  
 202012/20201215_01    [《PostgreSQL pgbench简介》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201215_01)  
