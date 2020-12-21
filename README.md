@@ -1,6 +1,7 @@
 # PostgreSQL
  
 ## 所有文件列表  
+202012/20201221_01.md [PostgreSQL大版本升级（pg_upgrade）](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201221_01.md)  
 202012/20201219_08.md [《PostgreSQL 12系统表(9)pg_settings》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_08.md)  
 202012/20201219_07.md [《PostgreSQL 12系统表(8)pg_indexes》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_07.md)  
 202012/20201219_06.md [《PostgreSQL 12系统表(7)pg_sequence》](https://github.com/PGquestions/PostgreSQL/blob/main/202012/20201219_06.md)  
